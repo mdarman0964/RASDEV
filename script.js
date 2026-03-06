@@ -1,4 +1,6 @@
-// RASDEV IDE - Main JavaScript
+
+# script.js - Updated with AI Chat functionality
+script_js = '''// RASDEV IDE - Main JavaScript with AI Chat
 
 // File storage
 const files = {
@@ -19,7 +21,7 @@ const files = {
     <script src="script.js"><\/script>
 </body>
 </html>`,
-
+    
     'style.css': `* {
     margin: 0;
     padding: 0;
@@ -67,7 +69,7 @@ p {
 .btn:hover {
     transform: scale(1.05);
 }`,
-
+    
     'script.js': `function showMessage() {
     alert('Hello from RASDEV! 🚀');
     console.log('Button clicked at:', new Date().toLocaleString());
@@ -76,7 +78,7 @@ p {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('RASDEV app initialized!');
 });`,
-
+    
     'README.md': `# RASDEV Project
 
 This is a sample project created with RASDEV IDE.
@@ -85,30 +87,48 @@ This is a sample project created with RASDEV IDE.
 - Live preview
 - Code editing
 - Terminal access
+- AI Assistant
 
 ## Getting Started
 1. Edit the files
 2. Click Run
-3. See the magic!`
+3. Ask AI for help!`
 };
 
-// State
+// AI Chat State
+let currentAIModel = 'gpt4';
+let aiChatHistory = [];
+let isAIChatOpen = false;
+
+// IDE State
 let currentFile = 'index.html';
 let openTabs = ['index.html'];
 let isTerminalMinimized = false;
+
+// AI Responses (Simulated)
+const aiResponses = {
+    'hello': "👋 Hello! I'm your AI coding assistant. How can I help you today?",
+    'hi': "Hi there! Ready to help you code. What are you working on?",
+    'help': "I can help you with:\n• Writing and debugging code\n• Explaining programming concepts\n• Code review and optimization\n• Generating documentation\n• Answering technical questions\n\nJust tell me what you need!",
+    'debug': "I can help debug your code. Please share:\n1. The error message you're seeing\n2. The relevant code snippet\n3. What you expected to happen",
+    'explain': "I'd be happy to explain! Which concept or code would you like me to clarify?",
+    'optimize': "I can help optimize your code. Please share the code you'd like me to review.",
+    'default': "I understand. Let me help you with that. Could you provide more details or share the specific code you're working with?"
+};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     updatePreview();
     setupResizers();
     setupEventListeners();
+    setupAIChat();
     updateCursorPosition();
 });
 
 // Setup event listeners
 function setupEventListeners() {
     const editor = document.getElementById('editor');
-
+    
     // Auto-save on input
     editor.addEventListener('input', () => {
         files[currentFile] = editor.value;
@@ -117,11 +137,11 @@ function setupEventListeners() {
         }
         updateCursorPosition();
     });
-
+    
     // Cursor position update
     editor.addEventListener('keyup', updateCursorPosition);
     editor.addEventListener('click', updateCursorPosition);
-
+    
     // Keyboard shortcuts
     editor.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') {
@@ -131,20 +151,20 @@ function setupEventListeners() {
             editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
             editor.selectionStart = editor.selectionEnd = start + 2;
         }
-
+        
         // Ctrl/Cmd + S
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
             addTerminalLine('File saved ✓', 'success');
         }
-
+        
         // Ctrl/Cmd + Enter
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             runCode();
         }
     });
-
+    
     // Terminal tabs
     document.querySelectorAll('.terminal-tab').forEach(tab => {
         tab.addEventListener('click', function() {
@@ -154,11 +174,274 @@ function setupEventListeners() {
     });
 }
 
+// Setup AI Chat
+function setupAIChat() {
+    const aiInput = document.getElementById('aiInput');
+    
+    // Auto-resize textarea
+    aiInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    
+    // Send on Enter (Shift+Enter for new line)
+    aiInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendAIMessage();
+        }
+    });
+}
+
+// Toggle AI Chat
+function toggleAIChat() {
+    const aiSidebar = document.getElementById('aiSidebar');
+    const aiBtn = document.querySelector('.ai-btn');
+    const resizer3 = document.getElementById('resizer3');
+    
+    isAIChatOpen = !isAIChatOpen;
+    
+    if (isAIChatOpen) {
+        aiSidebar.classList.add('open');
+        aiBtn.classList.add('active');
+        resizer3.classList.remove('hidden');
+        document.getElementById('aiInput').focus();
+    } else {
+        aiSidebar.classList.remove('open');
+        aiBtn.classList.remove('active');
+        resizer3.classList.add('hidden');
+    }
+}
+
+// Change AI Model
+function changeAIModel() {
+    const select = document.getElementById('aiModel');
+    currentAIModel = select.value;
+    
+    const modelNames = {
+        'gpt4': 'GPT-4',
+        'gpt35': 'GPT-3.5',
+        'claude': 'Claude 3',
+        'gemini': 'Gemini Pro',
+        'codellama': 'Code Llama'
+    };
+    
+    addSystemMessage(`🤖 Switched to ${modelNames[currentAIModel]} model`);
+}
+
+// Send AI Message
+function sendAIMessage() {
+    const input = document.getElementById('aiInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message
+    addUserMessage(message);
+    
+    // Clear input
+    input.value = '';
+    input.style.height = 'auto';
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    // Simulate AI response
+    setTimeout(() => {
+        removeTypingIndicator();
+        generateAIResponse(message);
+    }, 1500 + Math.random() * 1000);
+}
+
+// Add user message to chat
+function addUserMessage(text) {
+    const container = document.getElementById('aiChatContainer');
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'ai-message user';
+    messageDiv.innerHTML = `
+        <div class="ai-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="ai-content">
+            <p>${escapeHtml(text)}</p>
+        </div>
+    `;
+    
+    container.appendChild(messageDiv);
+    scrollToBottom();
+    
+    // Save to history
+    aiChatHistory.push({ role: 'user', content: text });
+}
+
+// Add AI message to chat
+function addAIMessage(text) {
+    const container = document.getElementById('aiChatContainer');
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'ai-message';
+    messageDiv.innerHTML = `
+        <div class="ai-avatar">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="ai-content">
+            ${formatAIResponse(text)}
+        </div>
+    `;
+    
+    container.appendChild(messageDiv);
+    scrollToBottom();
+    
+    // Save to history
+    aiChatHistory.push({ role: 'assistant', content: text });
+}
+
+// Add system message
+function addSystemMessage(text) {
+    const container = document.getElementById('aiChatContainer');
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'ai-message system';
+    messageDiv.style.opacity = '0.7';
+    messageDiv.innerHTML = `
+        <div class="ai-avatar" style="background: var(--bg-tertiary);">
+            <i class="fas fa-info" style="color: var(--text-secondary);"></i>
+        </div>
+        <div class="ai-content" style="background: var(--bg-tertiary); font-size: 12px;">
+            <p>${text}</p>
+        </div>
+    `;
+    
+    container.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+// Show typing indicator
+function showTypingIndicator() {
+    const container = document.getElementById('aiChatContainer');
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'ai-message typing';
+    typingDiv.id = 'typingIndicator';
+    typingDiv.innerHTML = `
+        <div class="ai-avatar">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="ai-content typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    `;
+    
+    container.appendChild(typingDiv);
+    scrollToBottom();
+}
+
+// Remove typing indicator
+function removeTypingIndicator() {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) indicator.remove();
+}
+
+// Generate AI Response
+function generateAIResponse(userMessage) {
+    const lowerMessage = userMessage.toLowerCase();
+    let response = aiResponses['default'];
+    
+    // Check for keywords
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+        response = aiResponses['hello'];
+    } else if (lowerMessage.includes('help')) {
+        response = aiResponses['help'];
+    } else if (lowerMessage.includes('debug') || lowerMessage.includes('error') || lowerMessage.includes('fix')) {
+        response = aiResponses['debug'];
+    } else if (lowerMessage.includes('explain') || lowerMessage.includes('what is') || lowerMessage.includes('how to')) {
+        response = aiResponses['explain'];
+    } else if (lowerMessage.includes('optimize') || lowerMessage.includes('improve') || lowerMessage.includes('better')) {
+        response = aiResponses['optimize'];
+    } else if (lowerMessage.includes('html')) {
+        response = "HTML (HyperText Markup Language) is the standard markup language for web pages. Here's a basic structure:\n\n<code>&lt;!DOCTYPE html&gt;<br>&lt;html&gt;<br>&nbsp;&nbsp;&lt;head&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;title&gt;Page Title&lt;/title&gt;<br>&nbsp;&nbsp;&lt;/head&gt;<br>&nbsp;&nbsp;&lt;body&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;h1&gt;Hello World&lt;/h1&gt;<br>&nbsp;&nbsp;&lt;/body&gt;<br>&lt;/html&gt;</code>";
+    } else if (lowerMessage.includes('css')) {
+        response = "CSS (Cascading Style Sheets) is used to style HTML elements. You can use it to control layout, colors, fonts, and more.\n\nExample:\n<code>body {<br>&nbsp;&nbsp;background: #f0f0f0;<br>&nbsp;&nbsp;font-family: Arial;<br>}</code>";
+    } else if (lowerMessage.includes('javascript') || lowerMessage.includes('js')) {
+        response = "JavaScript is a programming language that enables interactive web pages.\n\nExample function:\n<code>function greet(name) {<br>&nbsp;&nbsp;return 'Hello, ' + name + '!';<br>}<br><br>console.log(greet('World'));</code>";
+    } else if (lowerMessage.includes('code') || lowerMessage.includes('write')) {
+        response = "I can help you write code! What specific functionality do you need? For example:\n• A navigation menu\n• A form validation\n• An API call\n• A responsive layout";
+    }
+    
+    addAIMessage(response);
+}
+
+// Format AI Response (convert newlines to HTML)
+function formatAIResponse(text) {
+    // Convert code blocks
+    text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    
+    // Convert inline code
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Convert newlines to <br> or <p> tags
+    const paragraphs = text.split('\n\n');
+    return paragraphs.map(p => {
+        if (p.startsWith('<pre>')) return p;
+        if (p.startsWith('•')) {
+            const items = p.split('\n').map(item => `<li>${item.substring(2)}</li>`).join('');
+            return `<ul>${items}</ul>`;
+        }
+        return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+    }).join('');
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Scroll chat to bottom
+function scrollToBottom() {
+    const container = document.getElementById('aiChatContainer');
+    container.scrollTop = container.scrollHeight;
+}
+
+// Clear AI Chat
+function clearAIChat() {
+    const container = document.getElementById('aiChatContainer');
+    container.innerHTML = `
+        <div class="ai-message system">
+            <div class="ai-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="ai-content">
+                <p>👋 Hello! I'm your AI coding assistant. I can help you with:</p>
+                <ul>
+                    <li>Writing & debugging code</li>
+                    <li>Explaining concepts</li>
+                    <li>Code review & optimization</li>
+                    <li>Generating documentation</li>
+                </ul>
+                <p>How can I help you today?</p>
+            </div>
+        </div>
+    `;
+    aiChatHistory = [];
+}
+
+// Attach file to AI chat
+function attachFile() {
+    const fileNames = Object.keys(files).join(', ');
+    const message = `📎 Currently open files: ${fileNames}\n\nWhich file would you like me to review?`;
+    addSystemMessage(message);
+}
+
 // Toggle folder
 function toggleFolder(element) {
     const icon = element.querySelector('.fa-caret-down, .fa-caret-right');
     const nextElement = element.nextElementSibling;
-
+    
     if (icon.classList.contains('fa-caret-right')) {
         icon.classList.remove('fa-caret-right');
         icon.classList.add('fa-caret-down');
@@ -174,35 +457,24 @@ function toggleFolder(element) {
 
 // Open file
 function openFile(filename) {
-    // Save current content
     files[currentFile] = document.getElementById('editor').value;
-
-    // Update current file
     currentFile = filename;
-
-    // Update file tree active state
+    
     document.querySelectorAll('.file-item').forEach(item => {
         item.classList.remove('active');
     });
     const fileElement = document.querySelector(`[data-file="${filename}"]`);
     if (fileElement) fileElement.classList.add('active');
-
-    // Add tab if not exists
+    
     if (!openTabs.includes(filename)) {
         openTabs.push(filename);
         addTab(filename);
     }
-
-    // Update active tab
+    
     updateActiveTab(filename);
-
-    // Load content
     document.getElementById('editor').value = files[filename];
-
-    // Update file type indicator
     updateFileType(filename);
-
-    // Update preview if HTML
+    
     if (filename.endsWith('.html')) {
         updatePreview();
     }
@@ -212,14 +484,14 @@ function openFile(filename) {
 function addTab(filename) {
     const tabsContainer = document.getElementById('tabs');
     const extension = filename.split('.').pop();
-
+    
     const iconMap = {
         'html': 'fab fa-html5',
         'css': 'fab fa-css3-alt',
         'js': 'fab fa-js',
         'md': 'fab fa-markdown'
     };
-
+    
     const tab = document.createElement('div');
     tab.className = 'tab';
     tab.setAttribute('data-file', filename);
@@ -228,13 +500,13 @@ function addTab(filename) {
         <span>${filename}</span>
         <i class="fas fa-times close-tab" onclick="closeTab(event, '${filename}')"></i>
     `;
-
+    
     tab.addEventListener('click', (e) => {
         if (!e.target.classList.contains('close-tab')) {
             switchTab(filename);
         }
     });
-
+    
     tabsContainer.appendChild(tab);
 }
 
@@ -245,14 +517,13 @@ function switchTab(filename) {
     document.getElementById('editor').value = files[filename];
     updateActiveTab(filename);
     updateFileType(filename);
-
-    // Update file tree
+    
     document.querySelectorAll('.file-item').forEach(item => {
         item.classList.remove('active');
     });
     const fileItem = document.querySelector(`[data-file="${filename}"]`);
     if (fileItem) fileItem.classList.add('active');
-
+    
     if (filename.endsWith('.html')) {
         updatePreview();
     }
@@ -274,10 +545,10 @@ function closeTab(event, filename) {
     event.stopPropagation();
     const index = openTabs.indexOf(filename);
     openTabs.splice(index, 1);
-
+    
     const tab = document.querySelector(`.tab[data-file="${filename}"]`);
     if (tab) tab.remove();
-
+    
     if (currentFile === filename && openTabs.length > 0) {
         switchTab(openTabs[0]);
     }
@@ -287,21 +558,18 @@ function closeTab(event, filename) {
 function updatePreview() {
     const code = document.getElementById('editor').value;
     const preview = document.getElementById('preview');
-
+    
     if (currentFile.endsWith('.html')) {
-        // Create a complete HTML document with linked files
         let fullHTML = code;
-
-        // Inject CSS if exists
+        
         if (files['style.css'] && !code.includes('<link')) {
             fullHTML = code.replace('</head>', `<style>${files['style.css']}</style></head>`);
         }
-
-        // Inject JS if exists
+        
         if (files['script.js'] && !code.includes('<script')) {
             fullHTML = fullHTML.replace('</body>', `<script>${files['script.js']}<\/script></body>`);
         }
-
+        
         const blob = new Blob([fullHTML], { type: 'text/html' });
         preview.src = URL.createObjectURL(blob);
     }
@@ -317,7 +585,7 @@ function refreshPreview() {
 function runCode() {
     updatePreview();
     addTerminalLine('🏃 Running application...', 'info');
-
+    
     setTimeout(() => {
         addTerminalLine('✓ Server started at http://localhost:3000', 'success');
         addTerminalLine('✓ Build completed successfully!', 'success');
@@ -330,7 +598,7 @@ function addTerminalLine(text, type = 'normal') {
     const terminal = document.getElementById('terminal');
     const line = document.createElement('div');
     line.className = 'terminal-line';
-
+    
     if (type === 'success') {
         line.innerHTML = `<span style="color: #4ade80;">${text}</span>`;
     } else if (type === 'error') {
@@ -346,7 +614,7 @@ function addTerminalLine(text, type = 'normal') {
             <span style="color: var(--text-secondary);">${text}</span>
         `;
     }
-
+    
     terminal.appendChild(line);
     terminal.scrollTop = terminal.scrollHeight;
 }
@@ -366,125 +634,6 @@ function clearTerminal() {
 function toggleTerminal() {
     const terminal = document.getElementById('terminalSection');
     isTerminalMinimized = !isTerminalMinimized;
-
+    
     if (isTerminalMinimized) {
-        terminal.style.height = '40px';
-    } else {
-        terminal.style.height = 'var(--terminal-height)';
-    }
-}
-
-// Toggle preview
-function togglePreview() {
-    const previewPane = document.getElementById('previewPane');
-    const resizer2 = document.getElementById('resizer2');
-
-    previewPane.classList.toggle('hidden');
-    resizer2.classList.toggle('hidden');
-}
-
-// Create new file
-function createNewFile() {
-    const filename = prompt('Enter file name (e.g., app.js, style.css):');
-    if (filename && !files[filename]) {
-        files[filename] = '';
-
-        // Add to file tree
-        const fileTree = document.getElementById('rootFiles');
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        div.setAttribute('data-file', filename);
-        div.onclick = () => openFile(filename);
-
-        const extension = filename.split('.').pop();
-        const iconMap = {
-            'html': 'html-icon fab fa-html5',
-            'css': 'css-icon fab fa-css3-alt',
-            'js': 'js-icon fab fa-js',
-            'md': 'md-icon fab fa-markdown'
-        };
-
-        div.innerHTML = `
-            <i class="${iconMap[extension] || 'fas fa-file file-icon'}"></i>
-            <span>${filename}</span>
-        `;
-
-        fileTree.appendChild(div);
-        openFile(filename);
-
-        addTerminalLine(`Created new file: ${filename}`, 'success');
-    } else if (files[filename]) {
-        alert('File already exists!');
-    }
-}
-
-// Update cursor position
-function updateCursorPosition() {
-    const editor = document.getElementById('editor');
-    const text = editor.value.substring(0, editor.selectionStart);
-    const lines = text.split('\n');
-    const line = lines.length;
-    const col = lines[lines.length - 1].length + 1;
-
-    document.getElementById('cursorPos').textContent = `Ln ${line}, Col ${col}`;
-}
-
-// Update file type indicator
-function updateFileType(filename) {
-    const extension = filename.split('.').pop().toUpperCase();
-    document.getElementById('fileType').textContent = extension;
-}
-
-// Setup resizers
-function setupResizers() {
-    const resizer1 = document.getElementById('resizer1');
-    const resizer2 = document.getElementById('resizer2');
-    const sidebar = document.getElementById('sidebar');
-    const previewPane = document.getElementById('previewPane');
-
-    let isResizing = false;
-    let currentResizer = null;
-
-    resizer1.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        currentResizer = 'sidebar';
-        document.body.style.cursor = 'col-resize';
-    });
-
-    resizer2.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        currentResizer = 'preview';
-        document.body.style.cursor = 'col-resize';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isResizing) return;
-
-        if (currentResizer === 'sidebar') {
-            const newWidth = Math.max(200, Math.min(400, e.clientX));
-            sidebar.style.width = newWidth + 'px';
-        } else if (currentResizer === 'preview') {
-            const newWidth = Math.max(300, Math.min(600, window.innerWidth - e.clientX));
-            previewPane.style.width = newWidth + 'px';
-        }
-    });
-
-    document.addEventListener('mouseup', () => {
-        isResizing = false;
-        currentResizer = null;
-        document.body.style.cursor = 'default';
-    });
-}
-
-// Window resize handler
-window.addEventListener('resize', () => {
-    // Adjust layout on window resize
-});
-
-// Prevent accidental tab close
-window.addEventListener('beforeunload', (e) => {
-    if (Object.keys(files).some(f => files[f] !== '')) {
-        e.preventDefault();
-        e.returnValue = '';
-    }
-});
+        termin
