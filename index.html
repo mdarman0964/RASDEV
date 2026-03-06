@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+
+# index.html - Updated with AI Chat feature
+index_html = '''<!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -24,8 +26,12 @@
                 <i class="fas fa-chevron-down"></i>
             </div>
         </div>
-
+        
         <div class="nav-right">
+            <button class="ai-btn" onclick="toggleAIChat()">
+                <i class="fas fa-robot"></i>
+                <span>AI Assistant</span>
+            </button>
             <button class="run-btn" onclick="runCode()">
                 <i class="fas fa-play"></i>
                 <span>Run</span>
@@ -64,7 +70,7 @@
                     </button>
                 </div>
             </div>
-
+            
             <div class="file-tree" id="fileTree">
                 <!-- Root Folder -->
                 <div class="folder-item open" onclick="toggleFolder(this)">
@@ -72,7 +78,7 @@
                     <i class="fas fa-folder folder-icon"></i>
                     <span>my-project</span>
                 </div>
-
+                
                 <div class="folder-content" id="rootFiles">
                     <div class="file-item active" data-file="index.html" onclick="openFile('index.html')">
                         <i class="fab fa-html5 html-icon"></i>
@@ -92,7 +98,7 @@
                     </div>
                 </div>
             </div>
-
+            
             <div class="sidebar-footer">
                 <button class="tool-btn" title="Search">
                     <i class="fas fa-search"></i>
@@ -122,7 +128,7 @@
                     <i class="fas fa-times close-tab" onclick="closeTab(event, 'index.html')"></i>
                 </div>
             </div>
-
+            
             <!-- Editor -->
             <div class="editor-wrapper">
                 <textarea class="code-editor" id="editor" spellcheck="false" placeholder="// Start coding here...">&lt;!DOCTYPE html&gt;
@@ -143,7 +149,7 @@
 &lt;/body&gt;
 &lt;/html&gt;</textarea>
             </div>
-
+            
             <!-- Terminal -->
             <div class="terminal" id="terminalSection">
                 <div class="terminal-header">
@@ -189,6 +195,70 @@
 
         <!-- Resizer 2 -->
         <div class="resizer" id="resizer2"></div>
+
+        <!-- AI Chat Sidebar -->
+        <aside class="ai-sidebar" id="aiSidebar">
+            <div class="ai-header">
+                <div class="ai-title">
+                    <i class="fas fa-robot"></i>
+                    <span>RASDEV AI</span>
+                </div>
+                <button class="close-ai" onclick="toggleAIChat()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="ai-model-selector">
+                <select id="aiModel" onchange="changeAIModel()">
+                    <option value="gpt4">GPT-4</option>
+                    <option value="gpt35">GPT-3.5</option>
+                    <option value="claude">Claude 3</option>
+                    <option value="gemini">Gemini Pro</option>
+                    <option value="codellama">Code Llama</option>
+                </select>
+            </div>
+            
+            <div class="ai-chat-container" id="aiChatContainer">
+                <div class="ai-message system">
+                    <div class="ai-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="ai-content">
+                        <p>👋 Hello! I'm your AI coding assistant. I can help you with:</p>
+                        <ul>
+                            <li>Writing & debugging code</li>
+                            <li>Explaining concepts</li>
+                            <li>Code review & optimization</li>
+                            <li>Generating documentation</li>
+                        </ul>
+                        <p>How can I help you today?</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ai-input-area">
+                <div class="ai-tools">
+                    <button title="Attach file" onclick="attachFile()">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <button title="Clear chat" onclick="clearAIChat()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="ai-input-wrapper">
+                    <textarea id="aiInput" placeholder="Ask me anything about your code..." rows="1"></textarea>
+                    <button class="ai-send-btn" onclick="sendAIMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="ai-shortcuts">
+                    <span>Enter to send • Shift+Enter for new line</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Resizer 3 (AI) -->
+        <div class="resizer ai-resizer hidden" id="resizer3"></div>
 
         <!-- Preview -->
         <div class="preview-pane" id="previewPane">
@@ -240,4 +310,10 @@
 
     <script src="script.js"></script>
 </body>
-</html>
+</html>'''
+
+# Save updated index.html
+with open('/mnt/kimi/output/index.html', 'w', encoding='utf-8') as f:
+    f.write(index_html)
+
+print("✅ index.html আপডেট হয়েছে (AI Chat যোগ করা হয়েছে)!")
