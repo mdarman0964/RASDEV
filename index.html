@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RASDEV - Online IDE</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-left">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-code"></i>
+                </div>
+                <span class="logo-text">RASDEV</span>
+            </div>
+            <div class="divider"></div>
+            <div class="project-name">
+                <i class="fas fa-folder-open"></i>
+                <span>my-project</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+
+        <div class="nav-right">
+            <button class="run-btn" onclick="runCode()">
+                <i class="fas fa-play"></i>
+                <span>Run</span>
+            </button>
+            <div class="divider"></div>
+            <button class="icon-btn" title="Deploy">
+                <i class="fas fa-rocket"></i>
+            </button>
+            <button class="icon-btn" title="Share">
+                <i class="fas fa-share-alt"></i>
+            </button>
+            <div class="divider"></div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>Connected</span>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=User&background=0079f2&color=fff" class="user-avatar" alt="User">
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="section-title">Files</span>
+                <div class="sidebar-actions">
+                    <button class="icon-btn-sm" title="New File" onclick="createNewFile()">
+                        <i class="fas fa-file-plus"></i>
+                    </button>
+                    <button class="icon-btn-sm" title="New Folder">
+                        <i class="fas fa-folder-plus"></i>
+                    </button>
+                    <button class="icon-btn-sm" title="Upload">
+                        <i class="fas fa-upload"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="file-tree" id="fileTree">
+                <!-- Root Folder -->
+                <div class="folder-item open" onclick="toggleFolder(this)">
+                    <i class="fas fa-caret-down"></i>
+                    <i class="fas fa-folder folder-icon"></i>
+                    <span>my-project</span>
+                </div>
+
+                <div class="folder-content" id="rootFiles">
+                    <div class="file-item active" data-file="index.html" onclick="openFile('index.html')">
+                        <i class="fab fa-html5 html-icon"></i>
+                        <span>index.html</span>
+                    </div>
+                    <div class="file-item" data-file="style.css" onclick="openFile('style.css')">
+                        <i class="fab fa-css3-alt css-icon"></i>
+                        <span>style.css</span>
+                    </div>
+                    <div class="file-item" data-file="script.js" onclick="openFile('script.js')">
+                        <i class="fab fa-js js-icon"></i>
+                        <span>script.js</span>
+                    </div>
+                    <div class="file-item" data-file="README.md" onclick="openFile('README.md')">
+                        <i class="fab fa-markdown md-icon"></i>
+                        <span>README.md</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="tool-btn" title="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="tool-btn" title="Git">
+                    <i class="fas fa-code-branch"></i>
+                </button>
+                <button class="tool-btn" title="Packages">
+                    <i class="fas fa-cube"></i>
+                </button>
+                <button class="tool-btn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Resizer 1 -->
+        <div class="resizer" id="resizer1"></div>
+
+        <!-- Editor Area -->
+        <div class="editor-area">
+            <!-- Tabs -->
+            <div class="tabs-container" id="tabs">
+                <div class="tab active" data-file="index.html">
+                    <i class="fab fa-html5"></i>
+                    <span>index.html</span>
+                    <i class="fas fa-times close-tab" onclick="closeTab(event, 'index.html')"></i>
+                </div>
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-wrapper">
+                <textarea class="code-editor" id="editor" spellcheck="false" placeholder="// Start coding here...">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;RASDEV Project&lt;/title&gt;
+    &lt;link rel="stylesheet" href="style.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="container"&gt;
+        &lt;h1&gt;🚀 Welcome to RASDEV&lt;/h1&gt;
+        &lt;p&gt;This is your development environment&lt;/p&gt;
+        &lt;button class="btn" onclick="showMessage()"&gt;Click Me&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;script src="script.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</textarea>
+            </div>
+
+            <!-- Terminal -->
+            <div class="terminal" id="terminalSection">
+                <div class="terminal-header">
+                    <div class="terminal-tabs">
+                        <div class="terminal-tab active">
+                            <i class="fas fa-terminal"></i>
+                            <span>Console</span>
+                        </div>
+                        <div class="terminal-tab">
+                            <i class="fas fa-shell"></i>
+                            <span>Shell</span>
+                        </div>
+                        <div class="terminal-tab">
+                            <i class="fas fa-bug"></i>
+                            <span>Debug</span>
+                        </div>
+                    </div>
+                    <div class="terminal-actions">
+                        <button onclick="clearTerminal()" title="Clear">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button onclick="toggleTerminal()" title="Minimize">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="terminal-content" id="terminal">
+                    <div class="terminal-line">
+                        <span class="prompt">➜</span>
+                        <span class="path">~</span>
+                    </div>
+                    <div class="terminal-line output">
+                        RASDEV IDE v1.0.0 - Ready for development
+                    </div>
+                    <div class="terminal-line">
+                        <span class="prompt">➜</span>
+                        <span class="path">my-project</span>
+                        <span class="git-branch">git:(main)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resizer 2 -->
+        <div class="resizer" id="resizer2"></div>
+
+        <!-- Preview -->
+        <div class="preview-pane" id="previewPane">
+            <div class="preview-header">
+                <div class="preview-title">
+                    <i class="fas fa-desktop"></i>
+                    <span>Preview</span>
+                </div>
+                <div class="preview-actions">
+                    <button title="Refresh" onclick="refreshPreview()">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                    <button title="Open in new tab">
+                        <i class="fas fa-external-link-alt"></i>
+                    </button>
+                    <button title="Close" onclick="togglePreview()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="preview-content">
+                <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-left">
+            <span class="git-status">
+                <i class="fas fa-code-branch"></i>
+                main
+            </span>
+            <span class="changes">
+                <i class="fas fa-sync"></i>
+                0 changes
+            </span>
+        </div>
+        <div class="status-right">
+            <span id="cursorPos">Ln 1, Col 1</span>
+            <span>UTF-8</span>
+            <span id="fileType">HTML</span>
+            <span class="ready-status">
+                <i class="fas fa-check-circle"></i>
+                Ready
+            </span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
